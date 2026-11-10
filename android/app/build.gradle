@@ -1,0 +1,212 @@
+plugins {
+    id 'com.android.application'
+}
+
+android {
+    namespace 'com.elvarg.android'
+    compileSdk 35
+
+    defaultConfig {
+        applicationId 'com.elvarg.client'
+        minSdk 26
+        targetSdk 35
+        versionCode 1
+        versionName '1.0'
+        multiDexEnabled true
+    }
+
+    compileOptions {
+        sourceCompatibility JavaVersion.VERSION_17
+        targetCompatibility JavaVersion.VERSION_17
+        coreLibraryDesugaringEnabled true
+    }
+
+    buildTypes {
+        release {
+            minifyEnabled false
+        }
+    }
+
+    packaging {
+        resources {
+            excludes += [
+                'META-INF/**',
+                'README.md',
+                '**/*.kotlin_metadata',
+                '**/*.kotlin_module',
+            ]
+        }
+    }
+
+    sourceSets {
+        main {
+            java.srcDirs = ['src/main/java']
+            // The shared desktop client tree is copied (minus the classes that
+            // are replaced here) by the prepareShared* tasks below, so the
+            // replacement classes in this module never clash with the originals.
+            java.srcDir layout.buildDirectory.dir('generated/shared/java')
+            resources.srcDir layout.buildDirectory.dir('generated/shared/resources')
+            // The Jagex cache the client opens with RandomAccessFile, plus
+            // generated assets (worldData.json) that live at the project root.
+            assets.srcDirs = ['../../Cache', layout.buildDirectory.dir('generated/assets')]
+        }
+    }
+}
+
+def sharedDir = layout.buildDirectory.dir('generated/shared/java')
+def sharedResDir = layout.buildDirectory.dir('generated/shared/resources')
+
+// Files from ../../src/main/java that the Android port supplies its own version
+// of, or that are desktop-only. Everything here must have an Android counterpart
+// (same package + class name) unless it is genuinely desktop-only. See PORTING.md.
+def sharedExcludes = [
+        // ---- desktop RuneLite host (Swing/Guice/AWT) --------------------------
+        // Ported back in later phases as an Android in-game menu. It is not
+        // needed to boot the client, and virtually all of it imports AWT/Swing.
+        'net/runelite/client/**',
+
+        // ---- desktop-only HTTP/REST layer (used only by the host) -------------
+        'net/runelite/http/**',
+
+        // ---- desktop-only helpers (unused / AWT-bound) ------------------------
+        'com/runescape/util/SystemUtils.java',   // unused; AWT toolkit lookups
+        'com/runescape/draw/WheelOfFortune.java', // unused; AWT Arc2D/Stroke
+        'net/runelite/api/geometry/Geometry.java', // unused; java.awt.geom
+
+        // ---- applet / AWT engine + input --------------------------------------
+        'com/runescape/Client.java',
+        'com/runescape/engine/GameEngine.java',
+        'com/runescape/engine/Canvas.java',
+        'com/runescape/engine/impl/MouseHandler.java',
+        'com/runescape/engine/impl/KeyHandler.java',
+        'com/runescape/engine/impl/MouseWheelHandler.java',
+        'com/runescape/draw/ProducingGraphicsBuffer.java',
+        'com/runescape/draw/Rasterizer2D.java',
+        // javax.sound.sampled does not exist on Android; the Android variant
+        // feeds the same WAV data to AudioTrack.
+        'com/runescape/sound/SoundPlayer.java',
+        'com/runescape/sign/SignLink.java',
+
+        // ---- AWT rendering: sprites, fonts, orbs, overlays --------------------
+        'com/runescape/cache/graphics/RSFont.java',
+        'com/runescape/cache/graphics/sprite/Sprite.java',
+        'com/runescape/cache/graphics/sprite/SpriteCache.java',
+        'com/runescape/draw/skillorbs/SkillOrb.java',
+        'com/runescape/draw/skillorbs/SkillOrbs.java',
+        'com/runescape/draw/teleports/HierarchyOption.java',
+        'com/runescape/draw/teleports/TeleportChatBox.java',
+        'com/runescape/entity/GameObject.java',
+        'com/runescape/entity/GroundItemTile.java',
+        'com/runescape/entity/Npc.java',
+        'com/runescape/entity/Player.java',
+        'com/runescape/entity/model/Model.java',
+        'com/runescape/model/content/Keybinding.java',
+        'com/runescape/scene/object/GroundDecoration.java',
+        'com/runescape/scene/object/WallDecoration.java',
+        'com/runescape/scene/object/WallObject.java',
+        'com/runescape/util/FileUtils.java',
+
+        // ---- JavaFX / ImageIO / Kotlin-version usages -------------------------
+        'com/runescape/loginscreen/LoginScreen.kt',
+        'com/runescape/loginscreen/cinematic/CinematicScene.java',
+        // Reads ./worldData.json, which does not exist on Android: the Android
+        // variant reads it from the unpacked cache and has a built-in fallback.
+        'com/runescape/loginscreen/worlds/WorldManager.kt',
+        'com/runescape/util/ImagePacker.kt',
+        // Kotlin 1.3 accepted enum entries calling their own companion object;
+        // Kotlin 1.9 (required by AGP 8.7) rejects it — see the Android variant.
+        'com/runescape/loginscreen/flames/FlameImages.kt',
+
+        // ---- Kotlin sources replaced by Java variants -------------------------
+        // The Android module is written in Java; these shared Kotlin files have
+        // Java equivalents in the module (same package and class name).
+        'com/runescape/UserPreferences.kt',
+        'com/runescape/loginscreen/LoginBackground.kt',
+        'com/runescape/loginscreen/LoginState.kt',
+        'com/runescape/loginscreen/worlds/WorldData.kt',
+        'com/runescape/loginscreen/worlds/WorldType.kt',
+
+        // ---- net.runelite.api / rs.api AWT-touching types ---------------------
+        'net/runelite/api/Actor.java',
+        'net/runelite/api/Client.java',
+        'net/runelite/api/Constants.java',
+        'net/runelite/api/DecorativeObject.java',
+        'net/runelite/api/GameEngine.java',
+        'net/runelite/api/GameObject.java',
+        'net/runelite/api/GroundObject.java',
+        'net/runelite/api/JagexColor.java',
+        'net/runelite/api/MainBufferProvider.java',
+        'net/runelite/api/Perspective.java',
+        'net/runelite/api/Player.java',
+        'net/runelite/api/SpritePixels.java',
+        'net/runelite/api/TileObject.java',
+        'net/runelite/api/WallObject.java',
+        'net/runelite/api/geometry/Shapes.java',
+        'net/runelite/api/geometry/SimplePolygon.java',
+        'net/runelite/api/hooks/Callbacks.java',
+        // Android-only event (there is no AWT wheel event on Android).
+        'net/runelite/api/events/MouseWheelMoved.java',
+        'net/runelite/api/queries/BankItemQuery.java',
+        'net/runelite/api/queries/InventoryWidgetItemQuery.java',
+        'net/runelite/api/queries/ShopItemQuery.java',
+        'net/runelite/api/widgets/Widget.java',
+        'net/runelite/api/widgets/WidgetItem.java',
+        'net/runelite/rs/api/RSGameEngine.java',
+        'net/runelite/rs/api/RSKeyHandler.java',
+        'net/runelite/rs/api/RSModel.java',
+        'net/runelite/rs/api/RSMouseHandler.java',
+        'net/runelite/rs/api/RSMouseWheelHandler.java',
+        'net/runelite/rs/api/RSRasterProvider.java',
+]
+
+tasks.register('prepareShared', Sync) {
+    from('../../src/main/java') {
+        exclude sharedExcludes
+    }
+    into sharedDir
+}
+
+tasks.register('prepareSharedResources', Sync) {
+    from('../../src/main/resources')
+    into sharedResDir
+}
+
+// The login world list lives at the project root and is read with a relative
+// path on desktop. On Android the assets are unpacked into the cache directory,
+// so ship it as an asset; the Android WorldManager reads it from there.
+tasks.register('prepareAssets', Copy) {
+    from('../../worldData.json')
+    into layout.buildDirectory.dir('generated/assets')
+}
+
+tasks.named('preBuild').configure {
+    dependsOn 'prepareShared', 'prepareSharedResources', 'prepareAssets'
+}
+
+dependencies {
+    coreLibraryDesugaring 'com.android.tools:desugar_jdk_libs:2.1.2'
+
+    // Lombok: used by 380+ shared sources.
+    compileOnly 'org.projectlombok:lombok:1.18.34'
+    annotationProcessor 'org.projectlombok:lombok:1.18.34'
+
+    // In-tree RuneLite API/plugins need these (Android-compatible subset).
+    implementation 'com.google.guava:guava:32.1.3-android'
+    implementation 'com.google.code.gson:gson:2.10.1'
+    implementation 'com.google.inject:guice:4.2.3:no_aop'
+    implementation 'javax.inject:javax.inject:1'
+    implementation 'com.squareup.okhttp3:okhttp:4.9.1'
+    implementation 'io.reactivex.rxjava3:rxjava:3.1.2'
+    implementation 'com.jakewharton.rxrelay3:rxrelay:3.0.1'
+    implementation 'com.beust:klaxon:5.5'
+    implementation 'org.jetbrains:annotations:22.0.0'
+    implementation 'org.apache.commons:commons-lang3:3.12.0'
+    implementation 'commons-io:commons-io:2.8.0'
+    implementation 'org.apache.commons:commons-text:1.9'
+    implementation 'org.apache.commons:commons-csv:1.9.0'
+    implementation 'com.github.zafarkhaja:java-semver:0.9.0'
+
+    // Logging: SLF4J API is used everywhere; a lightweight Android binding.
+    implementation 'org.slf4j:slf4j-api:1.7.36'
+    implementation 'com.github.tony19:logback-android:2.0.0'
+}

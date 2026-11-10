@@ -1,0 +1,8 @@
+// Top-level build file for the Android client. The desktop build in the repo
+// root is a completely separate Gradle build (Gradle 7.1.1 / Java 11); this one
+// pins the Android Gradle Plugin + Gradle version it needs and reuses the same
+// src/main/java tree.
+plugins {
+    id 'com.android.application' version '8.7.3' apply false
+    id 'org.jetbrains.kotlin.android' version '1.9.24' apply false
+}

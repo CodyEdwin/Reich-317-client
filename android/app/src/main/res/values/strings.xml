@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">Elvarg Client</string>
+
+    <string name="notif_client_title">Elvarg Client</string>
+    <string name="notif_client_running">Running - tap to return to the game</string>
+    <string name="notif_channel_name">Game client</string>
+    <string name="notif_message_channel_name">Game messages</string>
+    <string name="notif_channel_description">Keeps the game client running while you use other apps.</string>
+    <string name="action_quit">Quit</string>
+
+    <string name="menu_open">Menu</string>
+    <string name="menu_title">Game menu</string>
+    <string name="menu_close">Close</string>
+    <string name="menu_plugins">Plugins</string>
+    <string name="menu_settings">Settings</string>
+    <string name="menu_client_settings">Client settings</string>
+    <string name="menu_worlds">World switcher</string>
+    <string name="menu_logout">Log out</string>
+    <string name="menu_logout_message">Return to the login screen?</string>
+    <string name="menu_world_switch_message">Switch to %1$s? You will be logged out first.</string>
+    <string name="menu_world_switch">Switch</string>
+    <string name="menu_keyboard">Keyboard</string>
+    <string name="menu_right_click">Right-click</string>
+    <string name="menu_quit">Quit</string>
+    <string name="menu_reset">Reset</string>
+    <string name="menu_keybind_prompt">Press the key you want to use</string>
+    <string name="menu_screenshot">Take screenshot</string>
+    <string name="menu_screenshot_saved">Screenshot saved to %1$s</string>
+    <string name="menu_screenshot_failed">Could not save the screenshot</string>
+
+    <string name="menu_no_plugins">No plugins are loaded.</string>
+    <string name="menu_notifications">Notifications</string>
+    <string name="menu_no_notifications">No notifications yet.</string>
+    <string name="menu_clear_notifications">Clear</string>
+    <string name="menu_no_settings">No settings are available yet.</string>
+    <string name="menu_no_worlds">No worlds are available.</string>
+    <string name="menu_client_starting">The client is still starting.</string>
+</resources>
